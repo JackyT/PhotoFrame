@@ -14,7 +14,7 @@
 #include <errno.h>
 
 #define BUFFER_SIZE 10240
-
+//字符串处理
 char *str_proc(char *p)
 {
 	int i = 0;
@@ -33,6 +33,7 @@ char *str_proc(char *p)
 
 	return NULL;
 }
+//查找文件
 int search_file(char *desk[],char *file,int num)
 {
 	int i = 0;
@@ -42,6 +43,7 @@ int search_file(char *desk[],char *file,int num)
 	}
 	return -1;
 }
+//打印desk文件成员
 void tranves_file_desk(char *desk[],int num) 
 {
 
@@ -50,6 +52,7 @@ void tranves_file_desk(char *desk[],int num)
 		fprintf(stdout,"%s\n",desk[i]);	
 	}
 }
+//将本地文件名发送给客户端供其下载
 int tranves_file_desk_to_socket(char *desk[],int num,int fd) 
 {
 
@@ -62,13 +65,14 @@ int tranves_file_desk_to_socket(char *desk[],int num,int fd)
 	}
 	return total;
 }
-
+//资源回收
 void destroy_file_desk(char *desk[],int num)
 {
 	int i = 0;
 	for(;i < num;i++)
 		free(desk[i]);
 }
+//文件名解析
 int is_all_digit(char *filename)
 {
 	int i = 0;
@@ -80,6 +84,7 @@ int is_all_digit(char *filename)
 	}
 	return 1;
 }
+//遍历文件夹
 int read_jpg_dir(char *path,char *file_desk[],int *pic_num)
 {	
 
@@ -214,6 +219,10 @@ int main(int argc, char **argv)
 	int receive,send;
 	int total = 0;
 	char buffer[BUFFER_SIZE];
+	//------------------------------------------------------------------
+	// step 4,command transmistion
+	//------------------------------------------------------------------
+
 	for (;;)
 	{
 		// step 4, accept, create a new_connected_socket, original socket still listen
@@ -246,13 +255,13 @@ int main(int argc, char **argv)
 
 			receive = read(new_connected_socket,buffer,sizeof(buffer));
 			write(STDOUT_FILENO,buffer,receive);
-			if(strncmp(buffer,"ls",2) == 0){
+			if(strncmp(buffer,"ls",2) == 0){ //receive ls command
 
 				//write(STDOUT_FILENO,buffer,receive);
 				total = tranves_file_desk_to_socket(file_desk,pic_num,new_connected_socket);
 				fprintf(stdout,"Send %d bytes successed.\n",total);	
 				
-			}else if(strncmp(buffer,"cp",2) == 0){
+			}else if(strncmp(buffer,"cp",2) == 0){ //receive cp command
 				total = 0;
 				char *ptr;
 				buffer[receive - 1] = '\0';

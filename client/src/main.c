@@ -23,6 +23,7 @@
 #include "display.h"
 #include "mouse.h"
 #include "common.h"
+#include "dir_tra.h"
 
 #define DISPLAY_FUNS 17
 #define BUFFER_SIZE 1024
@@ -42,6 +43,7 @@ char screen_save[SCREEN_SIZE];
 
 pthread_mutex_t mutex_lock = PTHREAD_MUTEX_INITIALIZER;
 
+//字符串处理
 char *str_proc(char *buf)
 {
 	int i = 0;
@@ -56,6 +58,7 @@ char *str_proc(char *buf)
 	}
 	return NULL;
 }
+#if 0
 int display_nature(char *filename,fb_info fb_inf)
 {
 	//u_char *decode_jpeg (const char *filename, fb_info *jpeg_inf)
@@ -90,66 +93,8 @@ int display_nature(char *filename,fb_info fb_inf)
 	screen_buf = NULL;
 	return 0;
 }
-void tranves_file_desk(char *desk[],int num) 
-{
-
-	int i = 0;
-	for(;i < num;i++){
-		fprintf(stdout,"%s\n",desk[i]);	
-	}
-}
-void destroy_file_desk(char *desk[],int num)
-{
-	int i = 0;
-	for(;i < num;i++)
-		free(desk[i]);
-}
-int is_all_digit(char *filename)
-{
-	int i = 0;
-	while(filename[i] != '\0')
-	{
-		if(isdigit(filename[i]) != 1)	
-			return 0;
-		i++;
-	}
-	return 1;
-}
-
-int read_jpg_dir(char *path,char *file_desk[],int *pic_num)
-{	
-
-	DIR *dir = opendir(path);
-	if(dir == NULL){
-		fprintf(stderr,"open dir failed,%s\n",strerror(errno));	
-		return -1;	
-	}
-
-	struct dirent *files;
-	*pic_num = 0;
-	while((files = readdir(dir)) != NULL)
-	{
-		if(is_all_digit(files->d_name) == 1)	
-			continue;
-		if(strstr(files->d_name,".jpg") == NULL)
-			continue;
-
-		//fprintf(stdout,"%s\n",files->d_name);
-		file_desk[*pic_num] = malloc(sizeof(char) * strlen(files->d_name) + 1);
-
-		if(file_desk[*pic_num] == NULL){
-			fprintf(stderr,"malloc for file_desk[%d] failed,%s\n",*pic_num,strerror(errno));	
-			return -2;
-		}
-		memcpy(file_desk[*pic_num],files->d_name,strlen(files->d_name));
-		file_desk[*pic_num][strlen(files->d_name)] = '\0';
-		//fprintf(stdout,"file_desk[%d] %s\n",*pic_num,file_desk[*pic_num]);
-		(*pic_num)++;
-	}
-	closedir(dir);
-	return 0;
-}
-
+#endif
+//鼠标线程
 void *mouse_ops(void *arg)
 {
 
@@ -240,7 +185,7 @@ void *mouse_ops(void *arg)
 
 int main (int argc, char **argv)
 {
-	if(argc > 1)
+	if(argc > 1)//文件传输模式
 	{
 		//fprintf(stdout,"%s\n",argv[1]);	
 		int server_fd;
@@ -253,20 +198,20 @@ int main (int argc, char **argv)
 		remote_ipv4_address.sin_port = htons(remote_port);
 		inet_pton(AF_INET,argv[1],&remote_ipv4_address.sin_addr);
 
-		//pause();
-
 		ssize_t receive;
 		ssize_t total = 0;
 		ssize_t send;
 		char buffer[BUFFER_SIZE];
 		while(1)
 		{
+			//1.create socket fd
 			if((server_fd = socket(PF_INET,SOCK_STREAM,0)) < 0){
 				fprintf(stderr,"socket create failed,%s\n",strerror(errno));	
 				exit(1);
 			}
 			fprintf(stdout,"Socket create successed,server fd %d\n",server_fd);
 
+			//2.connect socket fd
 			if(connect(server_fd,(struct sockaddr *)&remote_ipv4_address,sizeof(remote_ipv4_address)) < 0){
 				fprintf(stderr,"connect to remote server %s : %d failed,%s\n",argv[1],remote_port,strerror(errno));	
 				close(server_fd);
@@ -274,6 +219,7 @@ int main (int argc, char **argv)
 			}
 			fprintf(stdout,"Connected to %s:%d success.\n",argv[1],remote_port);
 
+			//3.command transport
 			receive = read(STDIN_FILENO,buffer,sizeof(buffer));
 			if(strncmp(buffer,"ls",2) == 0){
 				send = write(server_fd,buffer,receive);		
@@ -345,11 +291,12 @@ int main (int argc, char **argv)
 			}else if(strncmp(buffer,"exit",4) == 0){
 				break;	
 			}
+			//4.close socket fd
 			close(server_fd);
 		}
 	}
-	else{	
-		if(init_fb(&fb_inf) < 0){
+	else{	//普通数码相框演示模式
+		if(init_fb(&fb_inf) < 0){//初始化屏幕fd
 			fprintf(stderr,"init fb failed,%s\n",strerror(errno));	
 			exit(1);
 		}
@@ -358,19 +305,18 @@ int main (int argc, char **argv)
 		fprintf(stdout,"%d\n",screen_size);
 		int err_code;
 
-#if 1 
 		pthread_t mou_tid;
+		//鼠标线程创建
 		if((err_code = pthread_create(&mou_tid,NULL,mouse_ops,NULL)) != 0 )	{
 			fprintf(stderr,"create pthread failed,%s\n",strerror(err_code));	
 			exit(5);
 		}
-#endif
 
-#if 1 
 		char *file_desk[1024];
 
 
 		int pic_num = 0;
+		//遍历文件夹jpg文件
 		if(read_jpg_dir("./res/jpg",file_desk,&pic_num) < 0){
 			fprintf(stderr,"read_jpg_dir failed.\n");	
 			int pic_num = 0;
@@ -382,15 +328,13 @@ int main (int argc, char **argv)
 		}
 		tranves_file_desk(file_desk,pic_num);
 		fprintf(stdout,"sum %d\n",pic_num);
-#if 1 
 		err_code = init_ft("./res/fonts/fanxinshu.TTF",36);
 		if(err_code != 0){
 			fprintf(stderr,"init_ft failed\n");	
 			exit(1);
 		}
-#endif
 
-
+		//显示效果函数desk
 		fun play_funs[DISPLAY_FUNS] = {disp_jpeg2,fang_picture_l,right_mid_left,fang_picture_h,down_in,right_in,bai_ye_chuang,up_down,left_right,rand_picture,crilepicture_big,crilepicture_small,up_mid_down,left_fix_right,Random,Box_radom,dissolve};
 		unsigned int index = 0;
 		unsigned int fun_ind = 0;
@@ -399,13 +343,12 @@ int main (int argc, char **argv)
 welcome_menu:
 		rool_flag = 0;
 		welcome_flag = 1;
-#if 1 
+		//字体初始化
 		err_code = init_ft("./res/fonts/fanxinshu.TTF",36);
 		if(err_code != 0){
 			fprintf(stderr,"init_ft failed\n");	
 			exit(1);
 		}
-#endif
 
 		pthread_mutex_lock(&mutex_lock);
 		play_funs[0]("./res/welcome/welcome.jpg",fb_inf);
@@ -423,11 +366,9 @@ welcome_menu:
 		while(flag == 1)
 		{
 			//fprintf(stdout,"%s,%d,flag %d\n",pathname,fun_ind,mouse_global_flag);
-#if 1 
 			switch(mouse_global_flag)
 			{
-			case 0:	
-#if 1	
+			case 0:	//正常播放
 				snprintf(pathname,sizeof(pathname),"./res/jpg/%s",file_desk[index]);
 
 				pthread_mutex_lock(&mutex_lock);
@@ -441,11 +382,10 @@ welcome_menu:
 				index++;
 				index = index % pic_num;
 
-#endif	
 				sleep(1);
 
 				break;
-			case 1:
+			case 1://播放下一张
 				index++;
 				index = index % pic_num;
 				snprintf(pathname,sizeof(pathname),"./res/jpg/%s",file_desk[index]);
@@ -464,7 +404,7 @@ welcome_menu:
 				sleep(1);
 
 				break;
-			case -1:
+			case -1://播放上一张
 				index--;
 				index = index % pic_num;
 				snprintf(pathname,sizeof(pathname),"./res/jpg/%s",file_desk[index]);
@@ -481,16 +421,15 @@ welcome_menu:
 				mouse_global_flag = 10;
 				sleep(1);
 				break;
-			case 2:
+			case 2://返回main menu
 				goto welcome_menu;
 				break;
-			case 3:
+			case 3://退出
 				flag = 0;
 				break;
 			default:
 				break;
 			}
-#endif
 		}
 
 		pthread_mutex_lock(&mutex_lock);
@@ -505,7 +444,6 @@ welcome_menu:
 		pthread_join(mou_tid,NULL);	
 
 		destroy_file_desk(file_desk,pic_num);
-#endif	
 		if(munmap(fb_inf.fbmem,fb_inf.w * fb_inf.h * fb_inf.bpp / 8) < 0){
 			fprintf(stderr,"mmunmap failed,%s\n",strerror(errno));	
 			exit(5);

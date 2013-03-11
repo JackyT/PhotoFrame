@@ -11,7 +11,7 @@
 #include "common.h"
 
 #define FB_DEVICE "/dev/fb0"
-
+//初始化/dev/fb0,显示器文件
 int init_fb(fb_info *fb_inf)
 {
 	int fd;
@@ -47,7 +47,7 @@ int init_fb(fb_info *fb_inf)
 	
 	return 0;
 }
-
+//绘图
 int fb_pixel(fb_info fb_inf, int x, int y, u32_t color)
 {
 	u8_t *pos = (u8_t*)fb_inf.fbmem + (fb_inf.w * y + x) * fb_inf.bpp/8;
@@ -85,7 +85,7 @@ int fb_pixel_row(fb_info fb_inf, int x, int y, int len, u32_t color)
 
 	return 0;
 }
-
+//fb测试
 int fb_test(void)
 {
 
@@ -109,7 +109,7 @@ int fb_test(void)
 	munmap(fb_inf.fbmem, fb_inf.w * fb_inf.h * fb_inf.bpp / 8);
 	return 0;
 }
-
+//绘制像素点
 int  draw_point(fb_info fb_inf, int x, int y, u32_t  color)
 {
    unsigned char* p = fb_inf.fbmem + (x + y * fb_inf.w) * fb_inf.bpp/8;

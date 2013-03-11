@@ -26,7 +26,7 @@ static u32_t cursor_pixel[C_WIDTH * C_HEIGHT] = {
 	T_, T_, T_, T_, T_, T_, BORD, BORD, T_, T_
 };
 u32_t save_cursor[C_WIDTH * C_HEIGHT];
-
+//打开mice设备文件
 int open_mice(char * path)
 {
 	int fd;
@@ -35,7 +35,7 @@ int open_mice(char * path)
 	fd = open(path, O_RDWR | O_NONBLOCK);
 	return fd;
 }
-
+//读取鼠标状态
 int read_mice(int mfd, mouse_t * event, fb_info fb_inf)
 {
 	int ret;
@@ -57,6 +57,7 @@ int read_mice(int mfd, mouse_t * event, fb_info fb_inf)
 	if(event->ty >= fb_inf.h) event->ty = fb_inf.h - 1;
 	return ret;
 }
+
 int save_mouse(fb_info fb_inf, mouse_t mouse)
 {
 	int i, j, x, y; 
@@ -75,6 +76,7 @@ int save_mouse(fb_info fb_inf, mouse_t mouse)
 	}
 	return 0;
 }
+//绘制鼠标
 int draw_mouse(fb_info fb_inf, mouse_t mouse)
 {
 	int i, j, x, y;
@@ -95,6 +97,7 @@ int draw_mouse(fb_info fb_inf, mouse_t mouse)
 	}
 	return 0;
 }
+//隐藏鼠标
 int recover_mouse(fb_info fb_inf, mouse_t mouse)
 {
 	int i, j, x, y; u32_t color;

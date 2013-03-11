@@ -10,7 +10,7 @@ static FT_Face face;
 /* default font */
 static char *fontfile = "mao.ttf";
 static int psize = 32;
-
+//字体解码
 static u16_t s_font_utf8_to_unicode(const unsigned char *utf8, int *len)
 {
 	unsigned short unicode;
@@ -41,7 +41,7 @@ static u16_t s_font_utf8_to_unicode(const unsigned char *utf8, int *len)
 	}
 	return unicode;
 }
-
+//初始化字体.ttf文件
 int init_ft(const char *file, int size)
 {
 	/* XXX: font size */

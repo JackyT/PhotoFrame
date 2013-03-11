@@ -88,4 +88,4 @@ src/main.o: src/main.c /usr/include/stdio.h /usr/include/features.h \
  /usr/include/freetype/fterrors.h /usr/include/freetype/ftmoderr.h \
  /usr/include/freetype/fterrdef.h /usr/include/freetype/fttypes.h \
  /usr/include/freetype/ftsystem.h /usr/include/freetype/ftimage.h \
- include/display.h include/mouse.h include/common.h
+ include/display.h include/mouse.h include/common.h src/dir_tra.h
